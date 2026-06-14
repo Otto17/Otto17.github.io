@@ -1,0 +1,679 @@
+<!--
+    Copyright (c) 2026 Otto
+    License: GPL-3.0-or-later (see LICENSE)
+-->
+
+<!doctype html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>WEB Терминал</title>
+    <style>
+        :root {
+            --bg: #1e1e1e;
+            --panel: #252525;
+            --panel2: #2a2a2a;
+            --border: #3a3a3a;
+            --accent: #4ec94e;
+            --muted: #888;
+            --text: #d4d4d4;
+            --text-green: #4ec94e;
+            --btn-bg: #2d2d2d;
+            --btn-border: #444;
+            --btn-hover: #383838;
+            --btn-primary-bg: #1a3a1a;
+            --btn-primary-hover: #224422;
+            --btn-danger-bg: #3a1a1a;
+            --btn-danger-hover: #4a2020;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            font-family: 'Consolas', 'Courier New', monospace;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ─── Панель управления ─── */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            padding: 8px 10px;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .controls-group {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* ─── Общие стили элементов ─── */
+        select,
+        input,
+        button {
+            background: var(--btn-bg);
+            border: 1px solid var(--btn-border);
+            color: var(--text);
+            padding: 5px 9px;
+            border-radius: 5px;
+            font-family: inherit;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+            outline: none;
+        }
+
+        select:hover,
+        input:hover {
+            border-color: #666;
+        }
+
+        select:focus,
+        input:focus {
+            border-color: var(--accent);
+        }
+
+        /* ─── Кнопки ─── */
+        button {
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--btn-hover);
+            border-color: #666;
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        button.primary {
+            background: var(--btn-primary-bg);
+            border-color: #2a5a2a;
+            color: var(--text-green);
+            font-weight: bold;
+        }
+
+        button.primary:hover:not(:disabled) {
+            background: var(--btn-primary-hover);
+            border-color: #3a7a3a;
+        }
+
+        button.danger {
+            background: var(--btn-danger-bg);
+            border-color: #5a2a2a;
+            color: #e06060;
+        }
+
+        button.danger:hover:not(:disabled) {
+            background: var(--btn-danger-hover);
+            border-color: #7a3030;
+        }
+
+        button.warning {
+            background: #2d2a1a;
+            border-color: #5a4a1a;
+            color: #c8a840;
+        }
+
+        button.warning:hover:not(:disabled) {
+            background: #3a3520;
+            border-color: #7a6a20;
+        }
+
+        button.info {
+            background: #1a2a3a;
+            border-color: #1a4a6a;
+            color: #60a8e0;
+        }
+
+        button.info:hover:not(:disabled) {
+            background: #20354a;
+            border-color: #2060a0;
+        }
+
+        /* ─── Кнопка Отправить ─── */
+        button.send {
+            background: #1a2a3a;
+            border-color: #1a5a8a;
+            color: #60c8ff;
+            font-weight: bold;
+            padding: 6px 16px;
+            font-size: 14px;
+            /* Плавное затухание когда нет подключения */
+            transition: background 0.15s, border-color 0.15s,
+                        opacity 0.2s, transform 0.1s;
+        }
+
+        button.send:hover:not(:disabled) {
+            background: #1e3a52;
+            border-color: #2080c0;
+        }
+
+        button.send:active:not(:disabled) {
+            background: #254a68;
+            transform: translateY(1px);
+        }
+
+        /* ─── Тумблер автопрокрутки ─── */
+        .autoscroll-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--muted);
+            font-size: 13px;
+            cursor: pointer;
+            user-select: none;
+            padding: 4px 6px;
+            border-radius: 5px;
+            border: 1px solid transparent;
+            transition: border-color 0.15s;
+        }
+
+        .autoscroll-label:hover {
+            border-color: var(--border);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 36px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            position: absolute;
+        }
+
+        .toggle-track {
+            position: absolute;
+            inset: 0;
+            background: #3a3a3a;
+            border-radius: 20px;
+            border: 1px solid #555;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+
+        .toggle-track::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 14px;
+            height: 14px;
+            background: #888;
+            border-radius: 50%;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .toggle-switch input:checked+.toggle-track {
+            background: #1a3a1a;
+            border-color: #2a6a2a;
+        }
+
+        .toggle-switch input:checked+.toggle-track::after {
+            transform: translateX(16px);
+            background: var(--accent);
+        }
+
+        /* ─── Статус ─── */
+        .status {
+            font-size: 12px;
+            color: var(--muted);
+            margin-left: auto;
+            padding: 4px 8px;
+            background: var(--panel2);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            white-space: nowrap;
+        }
+
+        .status.connected {
+            color: var(--text-green);
+            border-color: #2a5a2a;
+            background: #1a2a1a;
+        }
+
+        .status.disconnected {
+            color: #e06060;
+            border-color: #5a2020;
+            background: #2a1a1a;
+        }
+
+        /* ─── Терминал ─── */
+        .terminal {
+            flex: 1;
+            background: var(--bg);
+            padding: 10px 14px;
+            overflow-y: auto;
+            overflow-x: auto;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+            width: 100%;
+            scrollbar-width: thin;
+            scrollbar-color: #444 #1e1e1e;
+        }
+
+        .terminal::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .terminal::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        .terminal::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 4px;
+        }
+
+        .terminal::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* ─── Строки лога ─── */
+        .log-line {
+            display: block;
+            width: 100%;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: var(--text);
+        }
+
+        /* ─── Разделитель абзаца ─── */
+        .log-separator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 6px 0;
+            color: #555;
+            font-size: 12px;
+        }
+
+        .log-separator::before,
+        .log-separator::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #3a3a3a;
+        }
+
+        /* ─── Строка ввода ─── */
+        .input-area {
+            display: flex;
+            align-items: center;
+            background: var(--panel2);
+            padding: 7px 10px;
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+            gap: 8px;
+        }
+
+        .input-prompt {
+            color: var(--accent);
+            font-weight: bold;
+            flex-shrink: 0;
+            font-size: 15px;
+        }
+
+        #commandInput {
+            flex: 1;
+            background: #1e1e1e;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            outline: none;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 14px;
+            padding: 5px 10px;
+            transition: border-color 0.15s;
+            /* На мобильных убираем автокапитализацию */
+            autocapitalize: none;
+        }
+
+        #commandInput:focus {
+            border-color: var(--accent);
+        }
+
+        #commandInput::placeholder {
+            color: #555;
+        }
+
+        label {
+            color: var(--muted);
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="controls">
+        <!-- Группа подключения -->
+        <div class="controls-group">
+            <button id="connectBtn" class="primary">⚡ Подключиться</button>
+            <button id="disconnectBtn" class="danger" disabled>✖ Отключиться</button>
+        </div>
+
+        <!-- Группа настроек -->
+        <div class="controls-group">
+            <label>
+                Скорость:
+                <select id="baudSelect">
+                    <option>115200</option>
+                    <option>9600</option>
+                    <option>74880</option>
+                    <option>57600</option>
+                    <option>230400</option>
+                    <option>460800</option>
+                    <option>921600</option>
+                    <option>Другая...</option>
+                </select>
+            </label>
+            <input id="customBaud" placeholder="введите скорость"
+                   style="width:130px;display:none" type="number" min="1" />
+
+            <label>
+                Окончание строки:
+                <select id="lineEnding">
+                    <option value="none">Нет</option>
+                    <option value="\n">LF (\n)</option>
+                    <option value="\r\n">CRLF (\r\n)</option>
+                    <option value="\r">CR (\r)</option>
+                </select>
+            </label>
+        </div>
+
+        <!-- Группа действий -->
+        <div class="controls-group">
+            <button id="clearBtn" class="warning">🗑 Очистить</button>
+            <button id="separatorBtn" class="info">¶ Абзац</button>
+
+            <label class="autoscroll-label" title="Включить / отключить автопрокрутку">
+                <span class="toggle-switch">
+                    <input type="checkbox" id="autoscrollToggle" checked />
+                    <span class="toggle-track"></span>
+                </span>
+                Автопрокрутка
+            </label>
+        </div>
+
+        <span class="status" id="status">Не подключено</span>
+    </div>
+
+    <div id="terminal" class="terminal"></div>
+
+    <div class="input-area">
+        <span class="input-prompt">&gt;</span>
+        <input id="commandInput" type="text"
+               placeholder="Введите команду..."
+               autocomplete="off"
+               autocapitalize="none"
+               autocorrect="off"
+               spellcheck="false" />
+        <button id="sendBtn" class="send" disabled>&#9658; Отправить</button>
+    </div>
+
+    <script>
+        // ─── Состояние ───────────────────────────────────────────────────────
+        let port         = null;
+        let reader       = null;
+        let inputDone    = null;
+        let outputDone   = null;
+        let outputStream = null;
+        let keepReading  = false;
+        let lineBuffer   = "";
+        let autoScroll   = true;
+
+        // ─── DOM ─────────────────────────────────────────────────────────────
+        const connectBtn       = document.getElementById('connectBtn');
+        const disconnectBtn    = document.getElementById('disconnectBtn');
+        const baudSelect       = document.getElementById('baudSelect');
+        const customBaud       = document.getElementById('customBaud');
+        const lineEnding       = document.getElementById('lineEnding');
+        const terminal         = document.getElementById('terminal');
+        const statusEl         = document.getElementById('status');
+        const commandInput     = document.getElementById('commandInput');
+        const clearBtn         = document.getElementById('clearBtn');
+        const separatorBtn     = document.getElementById('separatorBtn');
+        const autoscrollToggle = document.getElementById('autoscrollToggle');
+        const sendBtn          = document.getElementById('sendBtn');
+
+        // ─── Скорость ────────────────────────────────────────────────────────
+        baudSelect.addEventListener('change', () => {
+            customBaud.style.display =
+                baudSelect.value === 'Другая...' ? 'inline-block' : 'none';
+        });
+
+        function getBaudRate() {
+            if (baudSelect.value === 'Другая...') {
+                const n = parseInt(customBaud.value);
+                return Number.isFinite(n) && n > 0 ? n : 115200;
+            }
+            return parseInt(baudSelect.value);
+        }
+
+        // ─── Автопрокрутка ───────────────────────────────────────────────────
+        autoscrollToggle.addEventListener('change', () => {
+            autoScroll = autoscrollToggle.checked;
+        });
+
+        function scrollToBottom() {
+            if (autoScroll) terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        // ─── Статус ──────────────────────────────────────────────────────────
+        function setStatus(text, cls = '') {
+            statusEl.textContent = text;
+            statusEl.className = 'status ' + cls;
+        }
+
+        // ─── Подключение ─────────────────────────────────────────────────────
+        async function connect() {
+            if (!('serial' in navigator)) {
+                alert('Web Serial API не поддерживается.\nИспользуйте Chrome, Edge или Brave.');
+                return;
+            }
+            try {
+                port = await navigator.serial.requestPort();
+                await port.open({ baudRate: getBaudRate() });
+                keepReading = true;
+                readLoop();
+
+                const encoder = new TextEncoderStream();
+                outputDone   = encoder.readable.pipeTo(port.writable);
+                outputStream = encoder.writable.getWriter();
+
+                setStatus(`Подключено @ ${getBaudRate()} бод`, 'connected');
+                connectBtn.disabled    = true;
+                disconnectBtn.disabled = false;
+				sendBtn.disabled = false;
+
+                appendLog(`[Подключено @ ${getBaudRate()} бод]\n`, 'muted');
+            } catch (e) {
+                console.error(e);
+                setStatus('Ошибка подключения', 'disconnected');
+            }
+        }
+
+        // ─── Отключение ──────────────────────────────────────────────────────
+        async function disconnect() {
+            keepReading = false;
+            try { if (reader) await reader.cancel(); } catch {}
+            reader = null;
+            if (inputDone) await inputDone.catch(() => {});
+            inputDone = null;
+            try { if (outputStream) await outputStream.close(); } catch {}
+            outputStream = null;
+            if (outputDone) await outputDone.catch(() => {});
+            outputDone = null;
+            try { if (port) await port.close(); } catch {}
+            port = null;
+
+            setStatus('Отключено', 'disconnected');
+            connectBtn.disabled    = false;
+            disconnectBtn.disabled = true;
+			sendBtn.disabled = true;
+            appendLog('\n[Отключено]\n', 'muted');
+        }
+
+        // ─── Цикл чтения ─────────────────────────────────────────────────────
+        async function readLoop() {
+            const textDecoder = new TextDecoderStream();
+            try {
+                inputDone = port.readable.pipeTo(textDecoder.writable);
+                reader    = textDecoder.readable.getReader();
+                while (keepReading) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    if (value) appendToTerminal(value);
+                }
+            } catch (e) {
+                appendLog(`\n[ОШИБКА] ${e}\n`, 'error');
+            }
+        }
+
+        // ─── Вывод данных из порта ───────────────────────────────────────────
+        function appendToTerminal(text) {
+            text = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+            lineBuffer += text;
+            const lines = lineBuffer.split("\n");
+            lineBuffer = lines.pop();
+
+            const oldActive = document.getElementById("active-line");
+            if (oldActive) oldActive.remove();
+
+            for (const line of lines) {
+                const el = document.createElement('div');
+                el.className   = 'log-line';
+                el.textContent = line;
+                terminal.appendChild(el);
+            }
+
+            if (lineBuffer.length > 0) {
+                const activeLine = document.createElement("div");
+                activeLine.id          = "active-line";
+                activeLine.className   = "log-line";
+                activeLine.textContent = lineBuffer;
+                terminal.appendChild(activeLine);
+            }
+
+            scrollToBottom();
+        }
+
+        // ─── Служебные сообщения ─────────────────────────────────────────────
+        function appendLog(text, type = '') {
+            const colorMap = { muted: '#666', error: '#e06060', sent: '#60a8e0' };
+            const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+            lines.forEach((line, i) => {
+                if (i === lines.length - 1 && line === '') return;
+                const el = document.createElement('div');
+                el.className   = 'log-line';
+                el.style.color = colorMap[type] || '';
+                el.textContent = line;
+                terminal.appendChild(el);
+            });
+            scrollToBottom();
+        }
+
+        // ─── Отправка команды ────────────────────────────────────────────────
+        async function sendLine(line) {
+            if (!outputStream) {
+                appendLog('[Нет подключения]\n', 'error');
+                return;
+            }
+            const ending = lineEnding.value === 'none' ? '' : lineEnding.value;
+
+            if (line.trim() === "clear") {
+                clearTerminal();
+                commandInput.value = "";
+                return;
+            }
+
+            appendLog(`> ${line}\n`, 'sent');
+            await outputStream.write(line + ending);
+            commandInput.value = "";
+        }
+
+        // ─── Очистка ─────────────────────────────────────────────────────────
+        function clearTerminal() {
+            terminal.innerHTML = "";
+            lineBuffer = "";
+        }
+
+        // ─── Разделитель ─────────────────────────────────────────────────────
+        function insertSeparator() {
+            const timeStr = new Date().toLocaleTimeString('ru-RU');
+            const sep = document.createElement('div');
+            sep.className   = 'log-separator';
+            sep.textContent = `— Разделитель ${timeStr} —`;
+            terminal.appendChild(sep);
+            scrollToBottom();
+        }
+
+        // ─── События ─────────────────────────────────────────────────────────
+
+        // Enter в поле ввода
+        commandInput.addEventListener('keydown', async (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                const cmd = commandInput.value;
+                await sendLine(cmd);
+            }
+        });
+
+        // Кнопка Отправить
+        sendBtn.addEventListener('click', async () => {
+            const cmd = commandInput.value;
+            await sendLine(cmd);
+            // Возврат фокуса в поле
+            commandInput.focus();
+        });
+
+        connectBtn.addEventListener('click', connect);
+        disconnectBtn.addEventListener('click', disconnect);
+        clearBtn.addEventListener('click', clearTerminal);
+        separatorBtn.addEventListener('click', insertSeparator);
+
+        // ─── Начальное состояние ─────────────────────────────────────────────
+        disconnectBtn.disabled = true;
+        setStatus('Не подключено', '');
+    </script>
+</body>
+
+</html>
